@@ -21,7 +21,7 @@ from typing_extensions import Self
 
 from frigate.const import REGEX_JSON
 from frigate.detectors import DetectorConfig, ModelConfig
-from frigate.detectors.detector_config import BaseDetectorConfig
+from frigate.detectors.detector_config import BaseDetectorConfig, InputTensorEnum, PixelFormatEnum
 from frigate.plus import PlusApi
 from frigate.util.builtin import (
     deep_merge,
@@ -190,13 +190,13 @@ def verify_config_roles(camera_config: CameraConfig) -> None:
 
 
 def verify_valid_live_stream_names(
-    frigate_config: FrigateConfig, camera_config: CameraConfig
+        frigate_config: FrigateConfig, camera_config: CameraConfig
 ) -> ValueError | None:
     """Verify that a restream exists to use for live view."""
     for _, stream_name in camera_config.live.streams.items():
         if (
-            stream_name
-            not in frigate_config.go2rtc.model_dump().get("streams", {}).keys()
+                stream_name
+                not in frigate_config.go2rtc.model_dump().get("streams", {}).keys()
         ):
             return ValueError(
                 f"No restream with name {stream_name} exists for camera {camera_config.name}."
@@ -212,18 +212,18 @@ def verify_recording_retention(camera_config: CameraConfig) -> None:
     }
 
     if (
-        camera_config.record.retain.days != 0
-        and rank_map[camera_config.record.retain.mode]
-        > rank_map[camera_config.record.alerts.retain.mode]
+            camera_config.record.retain.days != 0
+            and rank_map[camera_config.record.retain.mode]
+            > rank_map[camera_config.record.alerts.retain.mode]
     ):
         logger.warning(
             f"{camera_config.name}: Recording retention is configured for {camera_config.record.retain.mode} and alert retention is configured for {camera_config.record.alerts.retain.mode}. The more restrictive retention policy will be applied."
         )
 
     if (
-        camera_config.record.retain.days != 0
-        and rank_map[camera_config.record.retain.mode]
-        > rank_map[camera_config.record.detections.retain.mode]
+            camera_config.record.retain.days != 0
+            and rank_map[camera_config.record.retain.mode]
+            > rank_map[camera_config.record.detections.retain.mode]
     ):
         logger.warning(
             f"{camera_config.name}: Recording retention is configured for {camera_config.record.retain.mode} and detection retention is configured for {camera_config.record.detections.retain.mode}. The more restrictive retention policy will be applied."
@@ -231,7 +231,7 @@ def verify_recording_retention(camera_config: CameraConfig) -> None:
 
 
 def verify_recording_segments_setup_with_reasonable_time(
-    camera_config: CameraConfig,
+        camera_config: CameraConfig,
 ) -> None:
     """Verify that recording segments are setup and segment time is not greater than 60."""
     record_args: list[str] = get_ffmpeg_arg_list(
@@ -283,8 +283,8 @@ def verify_required_zones_exist(camera_config: CameraConfig) -> None:
 def verify_autotrack_zones(camera_config: CameraConfig) -> ValueError | None:
     """Verify that required_zones are specified when autotracking is enabled."""
     if (
-        camera_config.onvif.autotracking.enabled
-        and not camera_config.onvif.autotracking.required_zones
+            camera_config.onvif.autotracking.enabled
+            and not camera_config.onvif.autotracking.required_zones
     ):
         raise ValueError(
             f"Camera {camera_config.name} has autotracking enabled, required_zones must be set to at least one of the camera's zones."
@@ -300,7 +300,7 @@ def verify_motion_and_detect(camera_config: CameraConfig) -> ValueError | None:
 
 
 def verify_lpr_and_face(
-    frigate_config: FrigateConfig, camera_config: CameraConfig
+        frigate_config: FrigateConfig, camera_config: CameraConfig
 ) -> ValueError | None:
     """Verify that lpr and face are enabled at the global level if enabled at the camera level."""
     if camera_config.lpr.enabled and not frigate_config.lpr.enabled:
@@ -308,8 +308,8 @@ def verify_lpr_and_face(
             f"Camera {camera_config.name} has lpr enabled but lpr is disabled at the global level of the config. You must enable lpr at the global level."
         )
     if (
-        camera_config.face_recognition.enabled
-        and not frigate_config.face_recognition.enabled
+            camera_config.face_recognition.enabled
+            and not frigate_config.face_recognition.enabled
     ):
         raise ValueError(
             f"Camera {camera_config.name} has face_recognition enabled but face_recognition is disabled at the global level of the config. You must enable face_recognition at the global level."
@@ -484,8 +484,8 @@ class FrigateConfig(FrigateBaseModel):
 
             for input in camera_config.ffmpeg.inputs:
                 need_detect_dimensions = "detect" in input.roles and (
-                    camera_config.detect.height is None
-                    or camera_config.detect.width is None
+                        camera_config.detect.height is None
+                        or camera_config.detect.width is None
                 )
 
                 if need_detect_dimensions:
@@ -576,15 +576,15 @@ class FrigateConfig(FrigateBaseModel):
                             else [filter.mask]
                         )
                     object_mask = (
-                        get_relative_coordinates(
-                            (
-                                camera_config.objects.mask
-                                if isinstance(camera_config.objects.mask, list)
-                                else [camera_config.objects.mask]
-                            ),
-                            camera_config.frame_shape,
-                        )
-                        or []
+                            get_relative_coordinates(
+                                (
+                                    camera_config.objects.mask
+                                    if isinstance(camera_config.objects.mask, list)
+                                    else [camera_config.objects.mask]
+                                ),
+                                camera_config.frame_shape,
+                            )
+                            or []
                     )
                     filter.mask = filter_mask + object_mask
 
@@ -665,10 +665,10 @@ class FrigateConfig(FrigateBaseModel):
                 elif detector_config.type == "openvino":
                     model_config["path"] = "/openvino-model/ssdlite_mobilenet_v2.xml"
                     model_config["labelmap_path"] = "/openvino-model/coco_91cl_bkgr.txt"
-                    model_config["width"] = "300"
-                    model_config["height"] = "300"
-                    model_config["input_tensor"] = "nhwc"
-                    model_config["input_pixel_format"] = "bgr"
+                    model_config["width"] = 300
+                    model_config["height"] = 300
+                    model_config["inputShape"] = InputTensorEnum.nhwc
+                    model_config["pixelFormat"] = PixelFormatEnum.bgr
 
             model = ModelConfig.model_validate(model_config)
             model.check_and_load_plus_model(self.plus_api, detector_config.type)
@@ -749,7 +749,7 @@ class FrigateConfig(FrigateBaseModel):
 
     @classmethod
     def parse_object(
-        cls, obj: Any, *, plus_api: Optional[PlusApi] = None, install: bool = False
+            cls, obj: Any, *, plus_api: Optional[PlusApi] = None, install: bool = False
     ):
         return cls.model_validate(
             obj, context={"plus_api": plus_api, "install": install}

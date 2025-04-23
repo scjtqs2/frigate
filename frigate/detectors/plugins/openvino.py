@@ -9,7 +9,7 @@ from typing_extensions import Literal
 
 from frigate.const import MODEL_CACHE_DIR
 from frigate.detectors.detection_api import DetectionApi
-from frigate.detectors.detector_config import BaseDetectorConfig, ModelTypeEnum
+from frigate.detectors.detector_config import BaseDetectorConfig, ModelTypeEnum, InputTensorEnum, PixelFormatEnum
 from frigate.util.model import (
     post_process_dfine,
     post_process_rfdetr,
@@ -46,8 +46,14 @@ class OvDetector(DetectionApi):
         self.w = detector_config.model.width
 
         if not os.path.isfile(detector_config.model.path):
-            logger.error(f"OpenVino model file {detector_config.model.path} not found.")
-            raise FileNotFoundError
+            # logger.error(f"OpenVino model file {detector_config.model.path} not found.")
+            # raise FileNotFoundError
+            detector_config.model.path="/openvino-model/ssdlite_mobilenet_v2.xml"
+            detector_config.model.labelmap_path="/openvino-model/coco_91cl_bkgr.txt"
+            detector_config.model.width=300
+            detector_config.model.height=300
+            detector_config.model.input_tensor=InputTensorEnum.nhwc
+            detector_config.model.input_pixel_format=PixelFormatEnum.bgr
 
         os.makedirs(os.path.join(MODEL_CACHE_DIR, "openvino"), exist_ok=True)
         self.ov_core.set_property(
