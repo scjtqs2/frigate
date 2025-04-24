@@ -676,11 +676,11 @@ class FrigateConfig(FrigateBaseModel):
                 model_config["path"] = "/cpu_model.tflite"
             elif detector_config.type == "edgetpu":
                 model_config["path"] = "/edgetpu_model.tflite"
-                model_config["labelmap_path"]="/labelmap.txt"
-                model_config["labelmapPath"]="/labelmap.txt"
-                model_config["pixelFormat"]="rgb"
-                model_config["width"]=320
-                model_config["height"]=320
+                model_config["labelmap_path"] = "/labelmap.txt"
+                model_config["labelmapPath"] = "/labelmap.txt"
+                model_config["pixelFormat"] = "rgb"
+                model_config["width"] = 320
+                model_config["height"] = 320
             model = ModelConfig.model_validate(model_config)
             model.check_and_load_plus_model(self.plus_api, detector_config.type)
             model.compute_model_hash()
