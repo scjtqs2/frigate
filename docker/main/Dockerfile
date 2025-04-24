@@ -6,8 +6,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Globally set pip break-system-packages option to avoid having to specify it every time
 ARG PIP_BREAK_SYSTEM_PACKAGES=1
 
-ARG BASE_IMAGE=debian:12
-ARG SLIM_BASE=debian:12-slim
+ARG BASE_IMAGE=docker.mobyds.com/library/debian:12
+ARG SLIM_BASE=docker.mobyds.com/library/debian:12-slim
 
 # A hook that allows us to inject commands right after the base images
 ARG BASE_HOOK=
@@ -297,7 +297,7 @@ CMD ["sleep", "infinity"]
 
 # Frigate web build
 # This should be architecture agnostic, so speed up the build on multiarch by not using QEMU.
-FROM --platform=$BUILDPLATFORM node:20 AS web-build
+FROM --platform=$BUILDPLATFORM docker.mobyds.com/library/node:20 AS web-build
 
 WORKDIR /work
 COPY web/package.json web/package-lock.json ./
