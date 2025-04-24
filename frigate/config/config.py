@@ -656,20 +656,10 @@ class FrigateConfig(FrigateBaseModel):
 
             if detector_config.model_path:
                 model_config["path"] = detector_config.model_path
-
-            if "path" not in model_config:
-                if detector_config.type == "cpu":
-                    model_config["path"] = "/cpu_model.tflite"
-                elif detector_config.type == "edgetpu":
-                    model_config["path"] = "/edgetpu_model.tflite"
-                elif detector_config.type == "openvino":
-                    model_config["path"] = "/openvino-model/ssdlite_mobilenet_v2.xml"
-                    model_config["labelmap_path"] = "/openvino-model/coco_91cl_bkgr.txt"
-                    model_config["width"] = 300
-                    model_config["height"] = 300
-                    model_config["inputShape"] = InputTensorEnum.nhwc
-                    model_config["pixelFormat"] = PixelFormatEnum.bgr
-
+            if detector_config.type == "cpu":
+                model_config["path"] = "/cpu_model.tflite"
+            elif detector_config.type == "edgetpu":
+                model_config["path"] = "/edgetpu_model.tflite"
             model = ModelConfig.model_validate(model_config)
             model.check_and_load_plus_model(self.plus_api, detector_config.type)
             model.compute_model_hash()
