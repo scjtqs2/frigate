@@ -375,34 +375,37 @@ def get_intel_gpu_stats1(sriov: bool) -> dict[str, str]:
 
         return results
 
+
 def get_intel_gpu_stats2(sriov: bool = False) -> dict[str, str]:
     """Get Intel GPU stats from intel_gpu_time text output."""
-    cmd = [
-        "timeout", "0.5s",
-        "intel_gpu_time",
-        "-o", "-", "-s", "1"
-    ]
-    if sriov:
-        cmd.extend(["-d", "drm:/dev/dri/card0"])
-
     try:
-        p = sp.run(cmd, encoding="utf-8", capture_output=True, check=False)
-
-        if p.returncode not in (0, 124):
-            return None
+        # 重点是加上 env=os.environ.copy()
+        p = sp.run(
+            ["intel_gpu_time", "-a"],
+            capture_output=True,
+            encoding="utf-8",
+            check=False,
+        )
+        # if p.returncode not in (0, 124):
+        #     logger.error(f"Unable to poll intel GPU stats: err={p.stderr},  out={p.stdout}, code={p.returncode}")
+        #     # return None
 
         for line in p.stdout.splitlines():
-            if line.startswith("GPU:"):
-                gpu_util = line.split("GPU:")[1].split("%")[0].strip()
-                return {
-                    "gpu": f"{float(gpu_util):.1f}%",
-                    "mem": "-%"
-                }
+            # logger.info(line)
+            for str in line.split():
+                # logger.info(str)
+                if str.startswith("GPU:"):
+                    gpu_util = line.split("GPU:")[1].split("%")[0].strip()
+                    return {
+                        "gpu": f"{float(gpu_util):.1f}%",
+                        "mem": "-%"
+                    }
 
         return None
 
     except Exception:
         return None
+
 
 def get_intel_gpu_stats(sriov: bool = False) -> dict[str, str]:
     """
