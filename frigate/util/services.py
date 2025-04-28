@@ -255,8 +255,131 @@ def get_amd_gpu_stats() -> dict[str, str]:
 
         return results
 
+def get_intel_gpu_stats(sriov: bool) -> dict[str, str]:
+    """Get stats using intel_gpu_top."""
 
-def get_intel_gpu_stats(sriov: bool = False) -> dict[str, str]:
+    def get_stats_manually(output: str) -> dict[str, str]:
+        """Find global stats via regex when json fails to parse."""
+        reading = "".join(output)
+        results: dict[str, str] = {}
+
+        # render is used for qsv
+        render = []
+        for result in re.findall(r'"Render/3D/0":{[a-z":\d.,%]+}', reading):
+            packet = json.loads(result[14:])
+            single = packet.get("busy", 0.0)
+            render.append(float(single))
+
+        if render:
+            render_avg = sum(render) / len(render)
+        else:
+            render_avg = 1
+
+        # video is used for vaapi
+        video = []
+        for result in re.findall(r'"Video/\d":{[a-z":\d.,%]+}', reading):
+            packet = json.loads(result[10:])
+            single = packet.get("busy", 0.0)
+            video.append(float(single))
+
+        if video:
+            video_avg = sum(video) / len(video)
+        else:
+            video_avg = 1
+
+        results["gpu"] = f"{round((video_avg + render_avg) / 2, 2)}%"
+        results["mem"] = "-%"
+        return results
+
+    intel_gpu_top_command = [
+        "timeout",
+        "0.5s",
+        "intel_gpu_top",
+        "-J",
+        "-o",
+        "-",
+        "-s",
+        "1",
+    ]
+
+    if sriov:
+        intel_gpu_top_command += ["-d", "drm:/dev/dri/card0"]
+
+    p = sp.run(
+        intel_gpu_top_command,
+        encoding="ascii",
+        capture_output=True,
+    )
+
+    # timeout has a non-zero returncode when timeout is reached
+    if p.returncode != 124:
+        logger.error(f"Unable to poll intel GPU stats: {p.stderr}")
+        return None
+    else:
+        output = "".join(p.stdout.split())
+
+        try:
+            data = json.loads(f"[{output}]")
+        except json.JSONDecodeError:
+            return get_stats_manually(output)
+
+        results: dict[str, str] = {}
+        render = {"global": []}
+        video = {"global": []}
+
+        for block in data:
+            global_engine = block.get("engines")
+
+            if global_engine:
+                render_frame = global_engine.get("Render/3D/0", {}).get("busy")
+                video_frame = global_engine.get("Video/0", {}).get("busy")
+
+                if render_frame is not None:
+                    render["global"].append(float(render_frame))
+
+                if video_frame is not None:
+                    video["global"].append(float(video_frame))
+
+            clients = block.get("clients", {})
+
+            if clients and len(clients):
+                for client_block in clients.values():
+                    key = client_block["pid"]
+
+                    if render.get(key) is None:
+                        render[key] = []
+                        video[key] = []
+
+                    client_engine = client_block.get("engine-classes", {})
+
+                    render_frame = client_engine.get("Render/3D", {}).get("busy")
+                    video_frame = client_engine.get("Video", {}).get("busy")
+
+                    if render_frame is not None:
+                        render[key].append(float(render_frame))
+
+                    if video_frame is not None:
+                        video[key].append(float(video_frame))
+
+        if render["global"] and video["global"]:
+            results["gpu"] = (
+                f"{round(((sum(render['global']) / len(render['global'])) + (sum(video['global']) / len(video['global']))) / 2, 2)}%"
+            )
+            results["mem"] = "-%"
+
+        if len(render.keys()) > 1:
+            results["clients"] = {}
+
+            for key in render.keys():
+                if key == "global" or not render[key] or not video[key]:
+                    continue
+
+                results["clients"][key] = (
+                    f"{round(((sum(render[key]) / len(render[key])) + (sum(video[key]) / len(video[key]))) / 2, 2)}%"
+                )
+
+        return results
+def get_intel_gpu_stats2(sriov: bool = False) -> dict[str, str]:
     """
     Get Intel GPU stats from intel_gpu_time text output.
 
