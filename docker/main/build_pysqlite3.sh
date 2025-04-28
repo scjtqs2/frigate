@@ -11,7 +11,7 @@ if [[ ! -d "sqlite" ]]; then
   tar xzf sqlite.tar.gz
   cd sqlite/
   LIBS="-lm" ./configure --disable-tcl --enable-tempstore=always
-  make sqlite3.c
+  make -j$(nproc) sqlite3.c
   cd ../
   rm sqlite.tar.gz
 fi
