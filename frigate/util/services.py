@@ -255,7 +255,8 @@ def get_amd_gpu_stats() -> dict[str, str]:
 
         return results
 
-def get_intel_gpu_stats(sriov: bool) -> dict[str, str]:
+
+def get_intel_gpu_stats1(sriov: bool) -> dict[str, str]:
     """Get stats using intel_gpu_top."""
 
     def get_stats_manually(output: str) -> dict[str, str]:
@@ -263,7 +264,6 @@ def get_intel_gpu_stats(sriov: bool) -> dict[str, str]:
         reading = "".join(output)
         results: dict[str, str] = {}
 
-        # render is used for qsv
         render = []
         for result in re.findall(r'"Render/3D/0":{[a-z":\d.,%]+}', reading):
             packet = json.loads(result[14:])
@@ -275,7 +275,6 @@ def get_intel_gpu_stats(sriov: bool) -> dict[str, str]:
         else:
             render_avg = 1
 
-        # video is used for vaapi
         video = []
         for result in re.findall(r'"Video/\d":{[a-z":\d.,%]+}', reading):
             packet = json.loads(result[10:])
@@ -292,14 +291,11 @@ def get_intel_gpu_stats(sriov: bool) -> dict[str, str]:
         return results
 
     intel_gpu_top_command = [
-        "timeout",
-        "0.5s",
+        "timeout", "0.5s",
         "intel_gpu_top",
         "-J",
-        "-o",
-        "-",
-        "-s",
-        "1",
+        "-o", "-",
+        "-s", "1",
     ]
 
     if sriov:
@@ -311,7 +307,6 @@ def get_intel_gpu_stats(sriov: bool) -> dict[str, str]:
         capture_output=True,
     )
 
-    # timeout has a non-zero returncode when timeout is reached
     if p.returncode != 124:
         logger.error(f"Unable to poll intel GPU stats: {p.stderr}")
         return None
@@ -379,17 +374,9 @@ def get_intel_gpu_stats(sriov: bool) -> dict[str, str]:
                 )
 
         return results
+
 def get_intel_gpu_stats2(sriov: bool = False) -> dict[str, str]:
-    """
-    Get Intel GPU stats from intel_gpu_time text output.
-
-    Args:
-        sriov: Whether to use SR-IOV device path.
-
-    Returns:
-        Dictionary containing GPU utilization.
-        Example: {"gpu": "0.0%", "mem": "-%"}
-    """
+    """Get Intel GPU stats from intel_gpu_time text output."""
     cmd = [
         "timeout", "0.5s",
         "intel_gpu_time",
@@ -401,22 +388,30 @@ def get_intel_gpu_stats2(sriov: bool = False) -> dict[str, str]:
     try:
         p = sp.run(cmd, encoding="utf-8", capture_output=True, check=False)
 
-        if p.returncode not in (0, 124):  # 124 is timeout's exit code
+        if p.returncode not in (0, 124):
             return None
 
-        # Parse the text output
         for line in p.stdout.splitlines():
             if line.startswith("GPU:"):
                 gpu_util = line.split("GPU:")[1].split("%")[0].strip()
                 return {
                     "gpu": f"{float(gpu_util):.1f}%",
-                    "mem": "-%"  # Memory info not available in this output
+                    "mem": "-%"
                 }
 
         return None
 
     except Exception:
         return None
+
+def get_intel_gpu_stats(sriov: bool = False) -> dict[str, str]:
+    """
+    Main entry: dynamically choose between intel_gpu_top or intel_gpu_time.
+    """
+    if os.getenv("XE", "false").lower() == "true":
+        return get_intel_gpu_stats2(sriov)
+    else:
+        return get_intel_gpu_stats1(sriov)
 
 
 def get_rockchip_gpu_stats() -> dict[str, str]:
