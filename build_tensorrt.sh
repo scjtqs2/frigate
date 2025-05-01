@@ -21,4 +21,4 @@ docker buildx bake \
   --set "*.args.COMPUTE_LEVEL=50 60 70 80 90" \
   --set "tensorrt.tags=${IMAGE_TAG}" \
   --load \
-  target:tensorrt
+  tensorrt
