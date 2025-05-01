@@ -19,7 +19,6 @@ docker buildx bake \
   -f docker/tensorrt/trt.hcl \
   --set "*.platforms=linux/amd64" \
   --set "*.args.COMPUTE_LEVEL=50 60 70 80 90" \
-  --set "*.args.TRT_BASE=nvidia/cuda:12.2-base" \  # 根据需求修改
   --set "tensorrt.tags=${IMAGE_TAG}"
   --load \        # 将镜像加载到本地
   target:tensorrt # 指定构建目标
