@@ -17,8 +17,7 @@ docker buildx inspect --bootstrap
 # 构建 TensorRT 镜像（AMD64）
 docker buildx bake \
   -f docker/tensorrt/trt.hcl \
-  --set "*.platforms=linux/amd64" \
-  --set "*.args.COMPUTE_LEVEL=50 60 70 80 90" \
-  --set "tensorrt.tags=${IMAGE_TAG}" \
+  --set target.tensorrt.tags=${IMAGE_TAG} \
+  --set target.tensorrt.args.COMPUTE_LEVEL="50 60 70 80 90" \
   --load \
   tensorrt
