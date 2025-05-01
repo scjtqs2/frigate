@@ -12,7 +12,7 @@ ENV TRT_VER=8.6.1
 
 # Install TensorRT wheels
 COPY docker/tensorrt/requirements-amd64.txt /requirements-tensorrt.txt
-RUN pip3 install -U -r /requirements-tensorrt.txt --index-url=https://mirrors.aliyun.com/pypi/simple --trusted-host mirrors.aliyun.com && ldconfig
+RUN pip3 install -U -r /requirements-tensorrt.txt --index-url=https://pypi.doubanio.com/pypi/simple --trusted-host pypi.doubanio.com && ldconfig
 
 WORKDIR /opt/frigate/
 COPY --from=rootfs / /

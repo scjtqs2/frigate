@@ -80,7 +80,7 @@ RUN apt-get -qq update \
     && wget -q https://bootstrap.pypa.io/get-pip.py -O get-pip.py \
     && sed -i 's/args.append("setuptools")/args.append("setuptools==77.0.3")/' get-pip.py \
     && python3 get-pip.py "pip" \
-    && pip3 install -r /requirements-ov.txt --index-url=https://mirrors.aliyun.com/pypi/simple --trusted-host mirrors.aliyun.com
+    && pip3 install -r /requirements-ov.txt --index-url=https://pypi.doubanio.com/simple/ --trusted-host pypi.doubanio.com
 
 # Get OpenVino Model
 RUN --mount=type=bind,source=docker/main/build_ov_model.py,target=/build_ov_model.py \
@@ -177,14 +177,14 @@ RUN wget -q https://bootstrap.pypa.io/get-pip.py -O get-pip.py \
     && python3 get-pip.py "pip"
 
 COPY docker/main/requirements.txt /requirements.txt
-RUN pip3 install  -r /requirements.txt --index-url=https://mirrors.aliyun.com/pypi/simple --trusted-host mirrors.aliyun.com
+RUN pip3 install  -r /requirements.txt --index-url=https://pypi.doubanio.com/pypi/simple --trusted-host pypi.doubanio.com
 
 # Build pysqlite3 from source
 COPY docker/main/build_pysqlite3.sh /build_pysqlite3.sh
 RUN /build_pysqlite3.sh
 
 COPY docker/main/requirements-wheels.txt /requirements-wheels.txt
-RUN pip3 wheel --wheel-dir=/wheels -r /requirements-wheels.txt --index-url=https://mirrors.aliyun.com/pypi/simple --trusted-host mirrors.aliyun.com
+RUN pip3 wheel --wheel-dir=/wheels -r /requirements-wheels.txt --index-url=https://pypi.doubanio.com/pypi/simple --trusted-host pypi.doubanio.com
 
 # Install HailoRT & Wheels
 RUN --mount=type=bind,source=docker/main/install_hailort.sh,target=/deps/install_hailort.sh \
@@ -288,7 +288,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=bind,source=./docker/main/requirements-dev.txt,target=/workspace/frigate/requirements-dev.txt \
-    pip3 install  -r requirements-dev.txt --index-url=https://mirrors.aliyun.com/pypi/simple --trusted-host mirrors.aliyun.com
+    pip3 install  -r requirements-dev.txt --index-url=https://pypi.doubanio.com/pypi/simple --trusted-host pypi.doubanio.com
 
 HEALTHCHECK NONE
 
