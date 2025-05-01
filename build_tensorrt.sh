@@ -20,5 +20,5 @@ docker buildx bake \
   --set "*.platforms=linux/amd64" \
   --set "*.args.COMPUTE_LEVEL=50 60 70 80 90" \
   --set "tensorrt.tags=${IMAGE_TAG}"
-  --load \        # 将镜像加载到本地
-  target:tensorrt # 指定构建目标
+  --load \
+  target:tensorrt
