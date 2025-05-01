@@ -256,7 +256,7 @@ def get_amd_gpu_stats() -> dict[str, str]:
         return results
 
 
-def get_intel_gpu_stats1(sriov: bool) -> dict[str, str]:
+def get_intel_gpu_stats1(sriov: bool = False) -> dict[str, str]:
     """Get stats using intel_gpu_top."""
 
     def get_stats_manually(output: str) -> dict[str, str]:
