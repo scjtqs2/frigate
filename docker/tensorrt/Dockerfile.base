@@ -38,7 +38,8 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     fi
 
 # Frigate w/ TensorRT Support as separate image
-FROM deps AS tensorrt-base
+ARG MAIN_BASE=base
+FROM ${MAIN_BASE} AS tensorrt-base
 
 #Disable S6 Global timeout
 ENV S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
