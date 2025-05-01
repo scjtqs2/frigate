@@ -11,8 +11,8 @@ IMAGE_TAG="ghcr.io/blakeblackshear/frigate:0.15.1-tensorrt"
 #docker build -t "${IMAGE_TAG}" -f docker/tensorrt/Dockerfile.amd64 .
 #docker push "${IMAGE_TAG}"
 # 启用 Buildx
-docker buildx create --use --name frigate-builder
-docker buildx inspect --bootstrap
+#docker buildx create --use --name frigate-builder
+#docker buildx inspect --bootstrap
 
 # 构建 TensorRT 镜像（AMD64）
 docker buildx bake \
