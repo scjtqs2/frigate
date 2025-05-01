@@ -5,6 +5,8 @@ echo "VERSION = \"${VERSION}-${COMMIT_HASH}\"" > frigate/version.py
 IMAGE_TAG="ghcr.io/blakeblackshear/frigate:0.15.1-tensorrt"
 
 docker build -t base -f docker/main/Dockerfile .
-export COMPUTE_LEVEL="50 60 70 80 90" && docker build -t tensorrt-base -f docker/tensorrt/Dockerfile.base .
+docker build -t tensorrt-base \
+--build-arg  COMPUTE_LEVEL="50 60 70 80 90" \
+ -f docker/tensorrt/Dockerfile.base .
 docker build -t "${IMAGE_TAG}" -f docker/tensorrt/Dockerfile.amd64 .
 #docker push "${IMAGE_TAG}"
